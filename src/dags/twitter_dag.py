@@ -8,8 +8,9 @@ from pathlib import Path
 import pendulum
 from airflow.models import DAG
 from airflow.operators.empty import EmptyOperator
-# from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-# from airflow.utils.dates import days_ago
+
+from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
+from airflow.utils.dates import days_ago
 
 from include.operators.twitter_operator import TwitterOperator
 
@@ -42,25 +43,25 @@ with DAG(dag_id="TwitterDAG", start_date=pendulum.datetime(2024, 3, 23, tz="UTC"
         end_time=end_time,
     )
 
-    # # NEED Connection
-    # # Type: Spark
-    # # ID: spark_default
-    # # Host: local
-    # # Deploy Mode: client
-    # # Spark binary: spark-submit
-    # twitter_transform = SparkSubmitOperator(
-    #     task_id="transform_twitter_datascience",
-    #     application=str(spark_scripts_path.joinpath("transformation.py")),
-    #     name="twitter_transformation",
-    #     application_args=[
-    #         "--src",
-    #         str(data_path.joinpath("twitter_datascience")),
-    #         "--dest",
-    #         str(data_path.joinpath("silver/twitter_datascience")),
-    #         "--process-date",
-    #         "{{ ds }}",
-    #     ],
-    # )
+    # NEED Connection
+    # Type: Spark
+    # ID: spark_default
+    # Host: local
+    # Deploy Mode: client
+    # Spark binary: spark-submit
+    twitter_transform = SparkSubmitOperator(
+        task_id="transform_twitter_datascience",
+        application=str(spark_scripts_path.joinpath("transformation.py")),
+        name="twitter_transformation",
+        application_args=[
+            "--src",
+            str(data_path.joinpath("twitter_datascience")),
+            "--dest",
+            str(data_path.joinpath("silver/twitter_datascience")),
+            "--process-date",
+            "{{ ds }}",
+        ],
+    )
 
     # tarefa_1 >> twitter_operator >> twitter_transform
-    tarefa_1 >> twitter_operator
+    tarefa_1 >> twitter_operator >> twitter_transform
