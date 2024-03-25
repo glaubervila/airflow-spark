@@ -76,9 +76,10 @@ x-airflow-common:
       #- ${AIRFLOW_PROJ_DIR:-.}/src/config:/opt/airflow/config
       #- ${AIRFLOW_PROJ_DIR:-.}/src/plugins:/opt/airflow/plugins
       #- ${AIRFLOW_PROJ_DIR:-.}/src/include:/opt/airflow/include
-    - ${AIRFLOW_PROJ_DIR:-.}/src:/opt/airflow
-    - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data  
-    - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs  
+    - ./src:/opt/airflow
+    - ./data:/opt/airflow/data
+    - ./logs:/opt/airflow/logs
+    - ..:/home/airflow/workspaces
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -135,11 +136,6 @@ services:
   airflow-scheduler:
     <<: *airflow-common
     command: scheduler
-    volumes:
-      - ${AIRFLOW_PROJ_DIR:-.}/src:/opt/airflow
-      - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data  
-      - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs  
-      - ..:/home/airflow/workspaces 
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
       interval: 30s
@@ -253,7 +249,7 @@ services:
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
     volumes:
-      - ${AIRFLOW_PROJ_DIR:-.}:/sources
+      - ${AIRFLOW_PROJ_DIR:-.}/src:/sources
 
   airflow-cli:
     <<: *airflow-common
