@@ -15,9 +15,16 @@ from airflow.utils.dates import days_ago
 from include.operators.twitter_operator import TwitterOperator
 
 base_path = Path("/opt/airflow")
-data_path = base_path.joinpath("data")
 spark_scripts_path = base_path.joinpath("include/spark")
 
+# Datalake path
+data_path = base_path.joinpath("data")
+# Bronze data path
+bronze_path = data_path.joinpath("bronze/twitter_datascience")
+# Silver data path
+silver_path = data_path.joinpath("silver/twitter_datascience")
+# Gold data path
+gold_path = data_path.joinpath("gold/twitter_datascience")
 
 TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.00Z"
 query = "datascience"
@@ -26,8 +33,7 @@ start_time = (datetime.now() + timedelta(-1)).date().strftime(TIMESTAMP_FORMAT)
 
 with DAG(dag_id="TwitterDAG", start_date=pendulum.datetime(2024, 3, 23, tz="UTC"), schedule_interval="@daily") as dag:
 
-    # Teste celery task
-    tarefa_1 = EmptyOperator(task_id="tarefa_1")
+    PARTITION_FOLDER_EXTRACT = f"extract_date={datetime.now().date()}"
 
     # NEED Connection
     # Type: HTTP
@@ -35,8 +41,8 @@ with DAG(dag_id="TwitterDAG", start_date=pendulum.datetime(2024, 3, 23, tz="UTC"
     # Host: https://labdados.com
     twitter_operator = TwitterOperator(
         task_id="twitter_datascience",
-        file_path=data_path.joinpath(
-            f"twitter_datascience/extract_date={datetime.now().date()}/datascience_{datetime.now().date().strftime('%Y%m%d')}.json"
+        file_path=bronze_path.joinpath(
+            PARTITION_FOLDER_EXTRACT, f"datascience_{datetime.now().date().strftime('%Y%m%d')}.json"
         ),
         query=query,
         start_time=start_time,
@@ -55,13 +61,26 @@ with DAG(dag_id="TwitterDAG", start_date=pendulum.datetime(2024, 3, 23, tz="UTC"
         name="twitter_transformation",
         application_args=[
             "--src",
-            str(data_path.joinpath("twitter_datascience")),
+            str(bronze_path),
             "--dest",
-            str(data_path.joinpath("silver/twitter_datascience")),
+            str(silver_path),
             "--process-date",
             "{{ ds }}",
         ],
     )
 
-    # tarefa_1 >> twitter_operator >> twitter_transform
-    tarefa_1 >> twitter_operator >> twitter_transform
+    twitter_insight = SparkSubmitOperator(
+        task_id="insight_twitter",
+        application=str(spark_scripts_path.joinpath("insight_tweet.py")),
+        name="insight_twitter",
+        application_args=[
+            "--src",
+            str(silver_path),
+            "--dest",
+            str(gold_path),
+            "--process-date",
+            "{{ ds }}",
+        ],
+    )
+
+    twitter_operator >> twitter_transform >> twitter_insight
