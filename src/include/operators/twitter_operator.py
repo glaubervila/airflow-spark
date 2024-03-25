@@ -12,7 +12,7 @@ from include.hooks.twitter_hook import TwitterHook
 
 class TwitterOperator(BaseOperator):
 
-    # template_fields = ["query", "file_path", "start_time", "end_time"]
+    template_fields = ["query", "file_path", "start_time", "end_time"]
 
     def __init__(self, file_path, start_time, end_time, query, **kwargs):
         self.start_time = start_time
