@@ -23,7 +23,8 @@ data_path = base_path.joinpath("data")
 bronze_path = data_path.joinpath("bronze/twitter_datascience")
 # Silver data path
 silver_path = data_path.joinpath("silver/twitter_datascience")
-
+# Gold data path
+gold_path = data_path.joinpath("gold/twitter_datascience")
 
 TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.00Z"
 query = "datascience"
@@ -68,4 +69,18 @@ with DAG(dag_id="TwitterDAG", start_date=pendulum.datetime(2024, 3, 23, tz="UTC"
         ],
     )
 
-    twitter_operator >> twitter_transform
+    twitter_insight = SparkSubmitOperator(
+        task_id="insight_twitter",
+        application=str(spark_scripts_path.joinpath("insight_tweet.py")),
+        name="insight_twitter",
+        application_args=[
+            "--src",
+            str(silver_path),
+            "--dest",
+            str(gold_path),
+            "--process-date",
+            "{{ ds }}",
+        ],
+    )
+
+    twitter_operator >> twitter_transform >> twitter_insight
