@@ -1,0 +1,22 @@
+{
+  "spark_default": {
+    "conn_type": "spark",
+    "description": "",
+    "login": "",
+    "password": "adminadmin",
+    "host": "local",
+    "port": null,
+    "schema": "gverde",
+    "extra": "{\"deploy-mode\": \"client\", \"spark-binary\": \"spark-submit\"}"
+  },
+  "twitter_default": {
+    "conn_type": "http",
+    "description": "",
+    "login": "gverde",
+    "password": "adminadmin",
+    "host": "https://labdados.com",
+    "port": null,
+    "schema": "",
+    "extra": "{}"
+  }
+}
