@@ -1,6 +1,27 @@
+<!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
+
+- [ETL Pipeline with Apache Airflow and Spark](#etl-pipeline-with-apache-airflow-and-spark)
+  - [Overview](#overview)
+    - [Extraction](#extraction)
+      - [Original Schema of Raw Data (Bronze)](#original-schema-of-raw-data-bronze)
+    - [Transformation](#transformation)
+    - [Load](#load)
+      - [Schema at the End of the Pipeline (Gold)](#schema-at-the-end-of-the-pipeline-gold)
+      - [Result dataframe](#result-dataframe)
+  - [Technologies Used](#technologies-used)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+    - [Start/Stop Services](#startstop-services)
+
+<!-- TOC end -->
+
+<!-- TOC --><a name="etl-pipeline-with-apache-airflow-and-spark"></a>
+
 # ETL Pipeline with Apache Airflow and Spark
 
 This repository contains a study project on Apache Airflow and Spark tools, developed during [Alura's Apache Airflow Training](https://www.alura.com.br/formacao-apache-airflow). The unique aspect of this project is the use of containers for the execution environment.
+
+<!-- TOC --><a name="overview"></a>
 
 ## Overview
 
@@ -16,9 +37,13 @@ The datalake adopts the standard medal structure, containing three directories:
 
 ![pipeline](./datalake_medal_architeture.jpg)
 
+<!-- TOC --><a name="extraction"></a>
+
 ### Extraction
 
 The first stage of the pipeline is extraction, which uses the **TwitterHook** (a custom HttpHook) to make requests to the API labdados.com. The **TwitterOperator** is responsible for organizing the API results in the `data/bronze` directory.
+
+<!-- TOC --><a name="original-schema-of-raw-data-bronze"></a>
 
 #### Original Schema of Raw Data (Bronze)
 
@@ -52,13 +77,19 @@ root
  |-- extract_date: date (nullable = true)
 ```
 
+<!-- TOC --><a name="transformation"></a>
+
 ### Transformation
 
 The second stage is transformation, which employs the **SparkSubmitOperator** and the script `/src/include/spark/transformation.py`. This stage processes the raw data and organizes it into two Spark dataframes tweets and users, thus forming the `silver` layer of the datalake.
 
+<!-- TOC --><a name="load"></a>
+
 ### Load
 
 The third stage would be the load, but in this example, it is limited to generating a dataframe with summarized data, constituting the `gold` layer of the datalake. This processing also uses the **SparkSubmitOperator**, executing the script `/src/include/spark/insight_tweet.py`.
+
+<!-- TOC --><a name="schema-at-the-end-of-the-pipeline-gold"></a>
 
 #### Schema at the End of the Pipeline (Gold)
 
@@ -73,6 +104,8 @@ root
  |-- weekday: string (nullable = true)
 ```
 
+<!-- TOC --><a name="result-dataframe"></a>
+
 #### Result dataframe
 
 ```markdown
@@ -83,6 +116,8 @@ root
 |  2024-03-25|       4|   201|    272|    170|      182|    Mon|
 +------------+--------+------+-------+-------+---------+-------+
 ```
+
+<!-- TOC --><a name="technologies-used"></a>
 
 ## Technologies Used
 
@@ -95,11 +130,15 @@ This project includes:
 - apache-airflow-providers-apache-spark 4.7.1.
 - PySpark 3.3.1.
 
+<!-- TOC --><a name="requirements"></a>
+
 ## Requirements
 
 - git
 - Docker + Docker Compose
 - Vscode with devcontainer extension
+
+<!-- TOC --><a name="installation"></a>
 
 ## Installation
 
@@ -120,6 +159,8 @@ Import connections
 ```bash
 docker compose run -it --rm airflow-cli airflow connections import /home/airflow/workspaces/airflow-spark/src/config/connections.json
 ```
+
+<!-- TOC --><a name="startstop-services"></a>
 
 ### Start/Stop Services
 
