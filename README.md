@@ -1,49 +1,51 @@
-# Airflow Devcontainer
+<!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
-<!-- Configurar os lints baseado no repositorio do airflow -->
-<!-- https://github.com/apache/airflow/blob/main/.gitignore -->
+- [ETL Pipeline with Apache Airflow and Spark](#etl-pipeline-with-apache-airflow-and-spark)
+  - [Overview](#overview)
+    - [Extraction](#extraction)
+      - [Original Schema of Raw Data (Bronze)](#original-schema-of-raw-data-bronze)
+    - [Transformation](#transformation)
+    - [Load](#load)
+      - [Schema at the End of the Pipeline (Gold)](#schema-at-the-end-of-the-pipeline-gold)
+      - [Result dataframe](#result-dataframe)
+  - [Technologies Used](#technologies-used)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+    - [Start/Stop Services](#startstop-services)
 
-https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
+<!-- TOC end -->
 
+<!-- TOC --><a name="etl-pipeline-with-apache-airflow-and-spark"></a>
 
-Based on these articles
+# ETL Pipeline with Apache Airflow and Spark
 
-https://medium.com/@paulmartins/debugging-airflow-with-vscode-21dbd41d4de6
+This repository contains a study project on Apache Airflow and Spark tools, developed during [Alura's Apache Airflow Training](https://www.alura.com.br/formacao-apache-airflow). The unique aspect of this project is the use of containers for the execution environment.
 
-https://levelup.gitconnected.com/debugging-airflow-dags-in-containers-with-vs-code-e31c0e899c7e
+<!-- TOC --><a name="overview"></a>
 
-https://davidgriffiths-data.medium.com/debugging-airflow-in-a-container-with-vs-code-7cc26734444
+## Overview
 
+The project implements a DAG named **TwitterDAG**, which is an ETL (Extract, Transform, Load) data pipeline. This pipeline queries the API <https://labdados.com> that simulates Twitter data, downloads the data for a specific term, and organizes the results into progressively refined directories and dataframes.
 
-```bash
-gh repo clone glaubervila/airflow_devcontainer
-```
+![pipeline](./airflow_spark.jpg)
 
-```bash
-mkdir -p ./dags ./logs ./plugins ./config
-echo -e "AIRFLOW_UID=$(id -u)" > .env
-```
+The datalake adopts the standard medal structure, containing three directories:
 
-```bash
-docker compose up airflow-init
-```
+- `bronze` for raw data,
+- `silver` for processed data,
+- `gold` for the final and refined data.
 
-```bash
-docker compose up
-```
+![pipeline](./datalake_medal_architeture.jpg)
 
+<!-- TOC --><a name="extraction"></a>
 
-### Export/Import Connections to Json file
+### Extraction
 
-```bash
-airflow connections export src/config/connections.json
-```
+The first stage of the pipeline is extraction, which uses the **TwitterHook** (a custom HttpHook) to make requests to the API labdados.com. The **TwitterOperator** is responsible for organizing the API results in the `data/bronze` directory.
 
-```bash
-airflow connections import src/config/connections.json
-```
+<!-- TOC --><a name="original-schema-of-raw-data-bronze"></a>
 
-Schema Original dos dados Brutos (Bronze)
+#### Original Schema of Raw Data (Bronze)
 
 ```markdown
 root
@@ -75,7 +77,21 @@ root
  |-- extract_date: date (nullable = true)
 ```
 
-Schema ao final do pipeline (Gold)
+<!-- TOC --><a name="transformation"></a>
+
+### Transformation
+
+The second stage is transformation, which employs the **SparkSubmitOperator** and the script `/src/include/spark/transformation.py`. This stage processes the raw data and organizes it into two Spark dataframes tweets and users, thus forming the `silver` layer of the datalake.
+
+<!-- TOC --><a name="load"></a>
+
+### Load
+
+The third stage would be the load, but in this example, it is limited to generating a dataframe with summarized data, constituting the `gold` layer of the datalake. This processing also uses the **SparkSubmitOperator**, executing the script `/src/include/spark/insight_tweet.py`.
+
+<!-- TOC --><a name="schema-at-the-end-of-the-pipeline-gold"></a>
+
+#### Schema at the End of the Pipeline (Gold)
 
 ```markdown
 root
@@ -88,7 +104,9 @@ root
  |-- weekday: string (nullable = true)
 ```
 
-Dataframe pronto para analise
+<!-- TOC --><a name="result-dataframe"></a>
+
+#### Result dataframe
 
 ```markdown
 +------------+--------+------+-------+-------+---------+-------+
@@ -98,3 +116,64 @@ Dataframe pronto para analise
 |  2024-03-25|       4|   201|    272|    170|      182|    Mon|
 +------------+--------+------+-------+-------+---------+-------+
 ```
+
+<!-- TOC --><a name="technologies-used"></a>
+
+## Technologies Used
+
+This project includes:
+
+- Containerized environment using Docker and Docker Compose.
+- A devcontainer for VSCode users.
+- Python 3.8 environment.
+- Airflow 2.8.0.
+- apache-airflow-providers-apache-spark 4.7.1.
+- PySpark 3.3.1.
+
+<!-- TOC --><a name="requirements"></a>
+
+## Requirements
+
+- git
+- Docker + Docker Compose
+- Vscode with devcontainer extension
+
+<!-- TOC --><a name="installation"></a>
+
+## Installation
+
+Git clone and directory creation.
+
+```bash
+git clone glaubervila/airflow-spark
+&& mkdir -p airflow-spark/logs airflow-spark/data
+&& sudo chown -R 1000:0 airflow-spark
+&& chmod -R g+w airflow-spark
+&& cd airflow-spark
+&& echo -e "AIRFLOW_UID=$(id -u)" > .env
+docker compose up airflow-init
+```
+
+Import connections
+
+```bash
+docker compose run -it --rm airflow-cli airflow connections import /home/airflow/workspaces/airflow-spark/src/config/connections.json
+```
+
+<!-- TOC --><a name="startstop-services"></a>
+
+### Start/Stop Services
+
+All services can be started using the compose up -d command. NOTE: The web interface is configured for port 80. If necessary, edit the docker-compose.yml and change the port.
+
+```bash
+docker compose up -d
+```
+
+Or access the folder with VSCode and start the devcontainer.
+
+```bash
+docker compose stop
+```
+
+If you need any further assistance, feel free to ask!
