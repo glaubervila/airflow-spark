@@ -1,26 +1,16 @@
-# ETL Pipeline with Apache Airflow and Spark
+# Pipeline ETL utilizando Apache airflow e spark
 
-This repository contains a study project on Apache Airflow and Spark tools, developed during [Alura's Apache Airflow Training](https://www.alura.com.br/formacao-apache-airflow). The unique aspect of this project is the use of containers for the execution environment.
+Este projeto foi feito para estudo das ferramentas Airflow e Spark, no contexto da Formação Apache Airflow da Alura, mas tem como diferencial o ambiente em containers.
 
-## Overview
+## Sobre
 
-The project implements a DAG named **TwitterDAG**, which is an ETL (Extract, Transform, Load) data pipeline. This pipeline queries the API <https://labdados.com> that simulates Twitter data, downloads the data for a specific term, and organizes the results into progressively refined directories and dataframes.
+Neste projeto foi implementada uma DAG **TwitterDAG** que é um data pipeline ETL (extract, tranform, load), que consulta uma api que gera dados fakes de twitter, baixa os dados para uma palavra especifica e organiza os resultados da api em diretórios e dataframes cada vez mais refinados.
 
-![pipeline](./airflow_spark.jpg)
+e o datalake segue o padrão medalha contendo 3 diretórios bronze para dados brutos, prata para os dados tratados e gold para os dados finais refinados.
 
-The datalake adopts the standard medal structure, containing three directories:
+A Primeira etapa é a de extração que utiliza **TwitterHook** um HttpHook para executar as requisições a api <https://labdados.com> e o **TwitterOperator** que organiza os resultado da api no diretório data/bronze.
 
-- `bronze` for raw data,
-- `silver` for processed data,
-- `gold` for the final and refined data.
-
-![pipeline](./datalake_medal_architeture.jpg)
-
-### Extraction
-
-The first stage of the pipeline is extraction, which uses the **TwitterHook** (a custom HttpHook) to make requests to the API labdados.com. The **TwitterOperator** is responsible for organizing the API results in the `data/bronze` directory.
-
-#### Original Schema of Raw Data (Bronze)
+Schema Original dos dados Brutos (Bronze) 
 
 ```markdown
 root
@@ -52,15 +42,11 @@ root
  |-- extract_date: date (nullable = true)
 ```
 
-### Transformation
+A Segunda etapa é a de transformação que utiliza o **SparkSubmitOperator** e o script `/src/include/spark/transformation.py` para tratar os dados brutos e organizar em dois spark dataframe (tweets, users) formando assim a camada silver do datalake.
 
-The second stage is transformation, which employs the **SparkSubmitOperator** and the script `/src/include/spark/transformation.py`. This stage processes the raw data and organizes it into two Spark dataframes tweets and users, thus forming the `silver` layer of the datalake.
+A Terceira etapa seria a de Load, mas neste exemplo está apenas gerando um dataframe com dados sumarizados formando assim a camada gold do nosso datalake. este processamento também é feito utilizando o **SparkSubmitOperator** mas desta vez executando o script `/src/include/spark/insight_tweet.py`
 
-### Load
-
-The third stage would be the load, but in this example, it is limited to generating a dataframe with summarized data, constituting the `gold` layer of the datalake. This processing also uses the **SparkSubmitOperator**, executing the script `/src/include/spark/insight_tweet.py`.
-
-#### Schema at the End of the Pipeline (Gold)
+Schema ao final do pipeline (Gold)
 
 ```markdown
 root
@@ -73,7 +59,7 @@ root
  |-- weekday: string (nullable = true)
 ```
 
-#### Result dataframe
+Dataframe pronto para analise
 
 ```markdown
 +------------+--------+------+-------+-------+---------+-------+
@@ -84,29 +70,23 @@ root
 +------------+--------+------+-------+-------+---------+-------+
 ```
 
-## Technologies Used
+## Tecnologias utilizadas
 
-This project includes:
+Este projeto conta com:
 
-- Containerized environment using Docker and Docker Compose.
-- A devcontainer for VSCode users.
-- Python 3.8 environment.
+- Ambiente em containers utilizando docker e docker compose.
+- Um devcontainer para usuarios de Vscode.
+- Enviroment python 3.8.
 - Airflow 2.8.0.
 - apache-airflow-providers-apache-spark 4.7.1.
-- PySpark 3.3.1.
+- pyspark 3.3.1.
 
-## Requirements
+## Instalação
 
-- git
-- Docker + Docker Compose
-- Vscode with devcontainer extension
-
-## Installation
-
-Git clone and directory creation.
+Git clone e criação dos diretórios.
 
 ```bash
-git clone glaubervila/airflow-spark
+gh repo clone glaubervila/airflow-spark
 && mkdir -p airflow-spark/logs airflow-spark/data
 && sudo chown -R 1000:0 airflow-spark
 && chmod -R g+w airflow-spark
@@ -121,18 +101,31 @@ Import connections
 docker compose run -it --rm airflow-cli airflow connections import /home/airflow/workspaces/airflow-spark/src/config/connections.json
 ```
 
-### Start/Stop Services
+## Start/Stop services
 
-All services can be started using the compose up -d command. NOTE: The web interface is configured for port 80. If necessary, edit the docker-compose.yml and change the port.
+Todos os servições podem ser ligados utilizando o comando compose up -d. 
+OBS: a interface web está configurada para porta 80. caso necessário edite o docker-compose.yml e altere a porta.
 
 ```bash
 docker compose up -d
 ```
 
-Or access the folder with VSCode and start the devcontainer.
+Ou acesse a pasta com vscode e ligue o devcontainer.
+
+para desligar os serviços utilize o comando
 
 ```bash
 docker compose stop
 ```
 
-If you need any further assistance, feel free to ask!
+### Export/Import Connections to Json file
+
+Estes comandos são uteis para exportar os dados de conexção entre ambientes.
+
+```bash
+airflow connections export src/config/connections.json
+```
+
+```bash
+airflow connections import src/config/connections.json
+```
