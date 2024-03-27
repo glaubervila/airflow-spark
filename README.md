@@ -27,7 +27,7 @@ This repository contains a study project on Apache Airflow and Spark tools, deve
 
 The project implements a DAG named **TwitterDAG**, which is an ETL (Extract, Transform, Load) data pipeline. This pipeline queries the API <https://labdados.com> that simulates Twitter data, downloads the data for a specific term, and organizes the results into progressively refined directories and dataframes.
 
-![pipeline](./airflow_spark.jpg)
+![pipeline](./pictures/airflow_spark.jpg)
 
 The datalake adopts the standard medal structure, containing three directories:
 
@@ -35,7 +35,7 @@ The datalake adopts the standard medal structure, containing three directories:
 - `silver` for processed data,
 - `gold` for the final and refined data.
 
-![pipeline](./datalake_medal_architeture.jpg)
+![pipeline](./pictures/datalake_medal_architeture.jpg)
 
 <!-- TOC --><a name="extraction"></a>
 
@@ -145,13 +145,14 @@ This project includes:
 Git clone and directory creation.
 
 ```bash
-git clone glaubervila/airflow-spark
-&& mkdir -p airflow-spark/logs airflow-spark/data
-&& sudo chown -R 1000:0 airflow-spark
-&& chmod -R g+w airflow-spark
-&& cd airflow-spark
-&& echo -e "AIRFLOW_UID=$(id -u)" > .env
-docker compose up airflow-init
+git clone https://github.com/glaubervila/airflow-spark.git \
+&& mkdir -p airflow-spark/logs airflow-spark/data \
+&& sudo chown -R 1000:0 airflow-spark \
+&& chmod -R g+w airflow-spark \
+&& cd airflow-spark \
+&& echo -e "AIRFLOW_UID=$(id -u)" > .env \
+&& docker compose build \
+&& docker compose up airflow-init
 ```
 
 Import connections
@@ -175,5 +176,7 @@ Or access the folder with VSCode and start the devcontainer.
 ```bash
 docker compose stop
 ```
+
+access <http://localhost> through the browser and use the default username **airflow** with the password **airflow**
 
 If you need any further assistance, feel free to ask!

@@ -72,11 +72,10 @@ x-airflow-common:
     # for other purpose (development, test and especially production usage) build/extend Airflow image.
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
   volumes:
-    #- ${AIRFLOW_PROJ_DIR:-.}/src/dags:/opt/airflow/dags
-      #- ${AIRFLOW_PROJ_DIR:-.}/src/config:/opt/airflow/config
-      #- ${AIRFLOW_PROJ_DIR:-.}/src/plugins:/opt/airflow/plugins
-      #- ${AIRFLOW_PROJ_DIR:-.}/src/include:/opt/airflow/include
-    - ./src:/opt/airflow
+    - ${AIRFLOW_PROJ_DIR:-.}/src/dags:/opt/airflow/dags
+    - ${AIRFLOW_PROJ_DIR:-.}/src/config:/opt/airflow/config
+    - ${AIRFLOW_PROJ_DIR:-.}/src/plugins:/opt/airflow/plugins
+    - ${AIRFLOW_PROJ_DIR:-.}/src/include:/opt/airflow/include
     - ./data:/opt/airflow/data
     - ./logs:/opt/airflow/logs
     - ..:/home/airflow/workspaces
